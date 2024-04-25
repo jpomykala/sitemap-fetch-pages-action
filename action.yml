@@ -17,9 +17,11 @@ runs:
       with:
         distribution: 'temurin'
         java-version: '21'
-    - name: "Download artifact"
-      uses: actions/download-artifact@v4
+    - name: Download artifact
+      id: download-artifact
+      uses: dawidd6/action-download-artifact@v3
       with:
+        github_token: ${{secrets.GITHUB_TOKEN}}
         name: cache-populate.jar
     - name: "Run JAR"
       run: "java -jar cache-populate.jar fetch --sitemap ${{ inputs.sitemap-url }}"
