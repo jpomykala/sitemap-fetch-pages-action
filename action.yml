@@ -17,9 +17,10 @@ runs:
       with:
         distribution: 'temurin'
         java-version: '21'
-    - name: "Build with Maven"
-      run: "mvn -B clean install -DskipTests --file pom.xml"
-      shell: bash
+    - name: "Download artifact"
+      uses: actions/download-artifact@v4
+      with:
+        name: cache-populate.jar
     - name: "Run JAR"
-      run: "java -jar ./target/cache-populate.jar fetch --sitemap ${{ inputs.sitemap-url }}"
+      run: "java -jar cache-populate.jar fetch --sitemap ${{ inputs.sitemap-url }}"
       shell: bash
