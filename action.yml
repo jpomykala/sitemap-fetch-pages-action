@@ -13,6 +13,8 @@ runs:
   using: 'composite'
   steps:
     - uses: actions/checkout@v4
+      with:
+        repository: jpomykala/sitemap-fetch-pages-action
     - name: "Setup Java"
       uses: actions/setup-java@v4
       with:
