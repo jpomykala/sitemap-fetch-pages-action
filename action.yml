@@ -12,17 +12,15 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - uses: actions/checkout@v4
     - name: "Setup Java"
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '21'
-    - name: Download artifact
-      id: download-artifact
-      uses: dawidd6/action-download-artifact@v3
-      with:
-        github_token: ${{secrets.GITHUB_TOKEN}}
-        name: cache-populate.jar
+        cache: 'maven'
+    - name: Build with Maven
+      run: mvn -B clean install -DskipTests --file pom.xml
     - name: "Run JAR"
-      run: "java -jar cache-populate.jar fetch --sitemap ${{ inputs.sitemap-url }}"
+      run: "java -jar ./target/cache-populate.jar fetch --sitemap ${{ inputs.sitemap-url }}"
       shell: bash
