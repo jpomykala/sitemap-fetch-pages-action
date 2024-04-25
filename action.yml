@@ -21,6 +21,7 @@ runs:
         cache: 'maven'
     - name: Build with Maven
       run: mvn -B clean install -DskipTests --file pom.xml
+      shell: bash
     - name: "Run JAR"
       run: "java -jar ./target/cache-populate.jar fetch --sitemap ${{ inputs.sitemap-url }}"
       shell: bash
