@@ -33,6 +33,6 @@ jobs:
           tag_name: latest
           files: target/cache-populate.jar
       - name: Open every website from sitemap
-        uses: jpomykala/sitemap-fetch-pages-action@latest
+        uses: jpomykala/sitemap-fetch-pages-action@main
         with:
-          sitemap-url: 'https://simplelocalize.io/sitemap.xml'
+          sitemap-url: 'https://renderform.io/sitemap.xml'
