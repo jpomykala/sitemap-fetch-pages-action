@@ -32,3 +32,7 @@ jobs:
           make_latest: true
           tag_name: latest
           files: target/cache-populate.jar
+      - name: Open every website from sitemap
+        uses: jpomykala/sitemap-fetch-pages-action@latest
+        with:
+          sitemap-url: 'https://simplelocalize.io/sitemap.xml'
