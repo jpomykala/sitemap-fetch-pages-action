@@ -1,0 +1,25 @@
+name: 'Open every website from sitemap'
+description: 'Open every website from sitemap to populate cache'
+author: "Jakub Pomykała"
+branding:
+  icon: 'globe'
+  color: 'blue'
+inputs:
+  sitemap-url:
+    description: 'URL to the sitemap file'
+    required: true
+    default: ''
+runs:
+  using: 'composite'
+  steps:
+    - name: "Setup Java"
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+    - name: "Build with Maven"
+      run: "mvn -B clean install -DskipTests --file pom.xml"
+      shell: bash
+    - name: "Run JAR"
+      run: "java -jar ./target/cache-populate.jar ${{ inputs.sitemap-url }}"
+      shell: bash
