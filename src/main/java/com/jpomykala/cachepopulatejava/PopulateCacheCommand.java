@@ -1,6 +1,5 @@
 package com.jpomykala.cachepopulatejava;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.LoadState;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +11,6 @@ import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 import org.springframework.util.StringUtils;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,22 +37,21 @@ public class PopulateCacheCommand {
 
         log.info("Starting cache population for sitemap: {}", sitemap);
 
-        String githubStepSummary = System.getenv("GITHUB_STEP_SUMMARY");
-        if (StringUtils.hasText(githubStepSummary)) {
-            log.info("Github step summary: {}", githubStepSummary);
-            String sample = """
-                    ## Cache population
-                    My awesome cache population step
-                    """;
-            Files.write(Paths.get(githubStepSummary), sample.getBytes());
-        } else {
-            log.info("No Github step summary found");
-        }
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("## Cache population\n");
 
         final String domain = DomainUtils.getDomain(sitemap);
         final List<String> sitemapUrls = sitemapFetcher.fetchAllSiteMapUrls(sitemap);
         log.info("Found {} urls in sitemap", sitemapUrls.size());
 
+        stringBuilder.append("Sitemap: ").append(sitemap).append("\n");
+        stringBuilder.append("Found ").append(sitemapUrls.size()).append(" urls\n");
+        if (maxPages > 0) {
+            stringBuilder.append("Max pages: ").append(maxPages).append("\n");
+        }
+
+
+        List<ErroredPage> erroredPages = new ArrayList<>();
         browserContextRunner.run(domain, context -> {
             int visitedPagesCounter = 0;
             Duration totalTime = Duration.ZERO;
@@ -75,6 +71,11 @@ public class PopulateCacheCommand {
                     page.waitForLoadState(LoadState.LOAD);
                 } catch (Exception e) {
                     log.error("Error loading page: {}", url, e);
+                    erroredPages.add(ErroredPage.builder()
+                            .url(url)
+                            .error(e.getMessage())
+                            .build()
+                    );
                     continue;
                 }
 
@@ -101,12 +102,23 @@ public class PopulateCacheCommand {
             long totalTimeMillis = totalTime.toMillis();
             String totalTimeString = DurationFormatUtils.formatDurationWords(totalTimeMillis, true, true);
             Duration avgDuration = totalTime.dividedBy(visitedPagesCounter);
+            long avgDurationMillis = avgDuration.toMillis();
             log.info("Visited {} urls in {} (avg {}ms)",
                     visitedPagesCounter,
                     totalTimeString,
-                    avgDuration.toMillis()
+                    avgDurationMillis
             );
 
+            stringBuilder.append("Visited ").append(visitedPagesCounter).append(" urls in ").append(totalTimeString).append(" (avg ").append(avgDurationMillis).append("ms)\n");
+            if (!erroredPages.isEmpty()) {
+                stringBuilder.append("## Errors\n");
+                erroredPages.forEach(erroredPage -> {
+                    log.error("Error loading page: {} - {}", erroredPage.url(), erroredPage.error());
+                    stringBuilder.append("- ").append(erroredPage.url()).append(" - ").append(erroredPage.error()).append("\n");
+                });
+            }
+
+            GithubActionSummaryUtil.writeSummary(stringBuilder.toString());
             if (StringUtils.hasText(exportFormat)) {
                 exportService.export(visitedPages, exportFormat);
             }
