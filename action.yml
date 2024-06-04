@@ -21,6 +21,11 @@ runs:
         distribution: 'zulu'
         java-version: '21'
         cache: 'maven'
+
+    - name: Set up Maven # For some reason setup-java doesn't set up Maven properly in self-hosted runners
+      uses: stCarolas/setup-maven@v5
+      with:
+        maven-version: 3.8.2
     - name: Build with Maven
       run: mvn -B clean install -DskipTests --file pom.xml
       shell: bash
