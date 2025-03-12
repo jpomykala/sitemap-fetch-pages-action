@@ -1,5 +1,6 @@
 package com.jpomykala.cachepopulatejava;
 
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.LoadState;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.util.StringUtils;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 
 @Slf4j
@@ -56,6 +58,7 @@ public class PopulateCacheCommand
         int visitedPagesCounter = 0;
         Duration totalTime = Duration.ZERO;
         List<VisitedPage> visitedPages = new ArrayList<>();
+        boolean isFailedToLoad = false;
 
         for (String url : sitemapUrls)
         {
@@ -87,10 +90,17 @@ public class PopulateCacheCommand
             var timeElapsed = end - start;
             totalTime = totalTime.plusMillis(timeElapsed);
             log.info("({}%) Loaded ({}ms) {}", percentageFormatted, timeElapsed, url);
+            isFailedToLoad = false;
           } catch (Exception e)
           {
             log.error("Error loading page: {}", url, e);
             erroredPages.add(ErroredPage.builder().url(url).error(e.getMessage()).build());
+            if (!isFailedToLoad)
+            {
+              log.info("Sleeping for 78s before retrying");
+              Uninterruptibles.sleepUninterruptibly(78, TimeUnit.SECONDS);
+              isFailedToLoad = true;
+            }
           }
         }
 
